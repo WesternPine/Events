@@ -4,6 +4,7 @@ import dev.westernpine.events.exception.*;
 import dev.westernpine.events.handler.EventHandler;
 import dev.westernpine.events.handler.Handler;
 import dev.westernpine.events.event.IEvent;
+import dev.westernpine.events.handler.Priority;
 import dev.westernpine.events.helper.EventHelper;
 
 import java.lang.reflect.Method;
@@ -22,7 +23,7 @@ public class DefaultEventManager implements IEventManager {
      * <br>Otherwise, all listeners must have an instance attached.
      * <br>
      * <br>Events are organized by 2 forms of priority.
-     * <br>- 1. {@link EventHandler.EventPriority} Handlers the first set of calls and is the primary driving factor for ordering event executions.
+     * <br>- 1. {@link Priority} Handlers the first set of calls and is the primary driving factor for ordering event executions.
      * <br>- 2. The order in which events are registered.
      * <br>
      * <br>Listeners and events can utilize a hierarchy of interfaces and extensions to organize and execute listeners and events.
@@ -50,7 +51,7 @@ public class DefaultEventManager implements IEventManager {
             if(!Objects.isNull(instance))
                 throw new StaticListenerRegistrationException(instance, method);
         } else {
-            if(Objects.isNull(instance) || method.getClass() != instance.getClass())
+            if(Objects.isNull(instance) || method.getDeclaringClass() != instance.getClass())
                 throw new InstanceListenerRegistrationException(instance, method);
         }
 
@@ -59,8 +60,8 @@ public class DefaultEventManager implements IEventManager {
 
         Class<? extends IEvent> clazz = (Class<? extends IEvent>) method.getParameters()[0].getType();
 
-        EventHandler.EventPriority priority = oHandler.get().eventPriority;
-        priority = Objects.isNull(priority) ? EventHandler.EventPriority.NORMAL : priority; // Null safety check.
+        Priority priority = oHandler.get().priority();
+        priority = Objects.isNull(priority) ? Priority.NORMAL : priority; // Null safety check.
 
         Handler handler = new Handler(instance, method, priority, clazz);
 
@@ -70,24 +71,30 @@ public class DefaultEventManager implements IEventManager {
         // If we add the listener in the proper order,
         // then we won't need to sort when we call the listener.
 
-        LinkedList<Handler> handlers = listeners.get(clazz);
-        if(handlers.isEmpty()) {
-            handlers.add(handler);
-        } else if (handler.priority() == EventHandler.EventPriority.LAST) { // If we already know it's the last priority, we know we want to add it last.
-            handlers.addFirst(handler);
+        int index = -1; // Referring back to the index later will prevent us from having to make a copy of the list to loop over. -1 Means to add last.
+        LinkedList<Handler> handlers = listeners.get(clazz); // Concurrent modification - Check for loop
+        if (handler.priority() == Priority.LAST) { // If we already know it's the last priority, we know we want to add it last.
+            // index = -1; // Assign last.
+        } else if(handlers.isEmpty()) {
+            index = 0;
         } else {
-            int index = -1;
-            for(Handler h : handlers) {
+            for(Handler h : handlers) { // Concurrent modification - Cant add in while looping over.
                 index++;
                 // HIGHEST(5) < NORMAL(3) = false (Don't Add)
                 // NORMAL(3) < NORMAL(3) = false (Don't Add)
                 // LAST(0) < NORMAL(3) = true (Add)
                 if(h.priority().value < handler.priority().value) { // We don't check = here to make sure we're adding the handler last when the event priority is the same.
-                    handlers.add(index, handler);
+                    break;
                 } else if (index == handlers.size()-1) { // Add as last handler if we've reached the end.
-                    handlers.add(handler);
+                    index = -1;
                 }
             }
+        }
+
+        if(index < 0) {
+            handlers.addLast(handler);
+        } else {
+            handlers.add(index, handler);
         }
 
         return handler;

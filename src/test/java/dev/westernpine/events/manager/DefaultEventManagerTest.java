@@ -4,11 +4,18 @@ import dev.westernpine.events.event.IEvent;
 import dev.westernpine.events.handler.EventHandler;
 import dev.westernpine.events.handler.Handler;
 import dev.westernpine.events.handler.HandlerReference;
+import dev.westernpine.events.handler.Priority;
 import dev.westernpine.events.helper.EventHelper;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class DefaultEventManagerTest {
 
@@ -40,9 +47,10 @@ class DefaultEventManagerTest {
     void call() {
         List<HandlerReference> references = EventHelper.getHandlerReferences(null, listenerTest);
         references.forEach(reference -> this.eventManager.registerListener(reference.instance(), reference.method()));
-        this.eventManager.call(new EventTest1(1));
-        this.eventManager.call(new EventTest1(2)); // We're doing 2 calls (addition) to make sure we're not calling other events (subtraction) each time as well.
-        this.eventManager.call(new EventTest2(1));
+        Assertions.assertTrue(this.eventManager.call(new EventTest1(1)).isEmpty());
+        Assertions.assertTrue(this.eventManager.call(new EventTest1(2)).isEmpty());// We're doing 2 calls (addition) to make sure we're not calling other events (subtraction) each time as well.
+        Assertions.assertTrue(this.eventManager.call(new EventTest2(1)).isEmpty());
+        Assertions.assertTrue(this.eventManager.call(new EventTest2(0)).isEmpty());
     }
 
     @org.junit.jupiter.api.Test
@@ -67,14 +75,22 @@ class ListenerTest {
 
     @EventHandler
     public void TestEventListener1(EventTest1 event) {
-        i++;
         Assertions.assertEquals(i, event.value);
+    }
+
+    @EventHandler(priority = Priority.FIRST)
+    public void PriorityTest1(EventTest1 event) {
+        i++;
     }
 
     @EventHandler
     public void TestEventListener2(EventTest2 event) {
-        i--;
         Assertions.assertEquals(i, event.value);
+    }
+
+    @EventHandler(priority = Priority.FIRST)
+    public void PriorityTest2(EventTest2 event) {
+        i--;
     }
 
 

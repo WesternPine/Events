@@ -26,7 +26,7 @@ public class EventHelper {
     }
 
     public static boolean isStatic(Method method) {
-        return Modifier.isPublic(method.getModifiers());
+        return Modifier.isStatic(method.getModifiers());
     }
 
     /**

@@ -18,7 +18,7 @@ public interface IEventManager {
      * <br>Otherwise, all listeners must have an instance attached.
      * <br>
      * <br>Events are organized by 2 forms of priority.
-     * <br>- 1. {@code EventHandler.EventPriority} Handlers the first set of calls and is the primary driving factor for ordering event executions.
+     * <br>- 1. {@code EventHandler.Priority} Handlers the first set of calls and is the primary driving factor for ordering event executions.
      * <br>- 2. The order in which events are registered.
      * <br>
      * <br>Listeners and events can utilize a hierarchy of interfaces and extensions to organize and execute listeners and events.
