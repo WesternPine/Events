@@ -1,5 +1,6 @@
 package dev.westernpine.events.manager;
 
+import dev.westernpine.events.event.ICancellable;
 import dev.westernpine.events.exception.*;
 import dev.westernpine.events.handler.EventHandler;
 import dev.westernpine.events.handler.Handler;
@@ -15,7 +16,15 @@ public class DefaultEventManager implements IEventManager {
 
     private final HashMap<Class<? extends IEvent>, LinkedList<Handler>> listeners = new HashMap<>();
 
-    public DefaultEventManager() { }
+    private boolean stopExecutionOnException;
+
+    /**
+     * Creates a new Default Event Manager.
+     * @param stopExecutionOnException Determines whether to continue executing handlers for an event if there is an exception.
+     */
+    public DefaultEventManager(boolean stopExecutionOnException) {
+        this.stopExecutionOnException = stopExecutionOnException;
+    }
 
     /**
      * Register a listener for an event.
@@ -63,7 +72,9 @@ public class DefaultEventManager implements IEventManager {
         Priority priority = oHandler.get().priority();
         priority = Objects.isNull(priority) ? Priority.NORMAL : priority; // Null safety check.
 
-        Handler handler = new Handler(instance, method, priority, clazz);
+        boolean ignoreCanceled = oHandler.get().ignoreCancelled();
+
+        Handler handler = new Handler(instance, method, priority, ignoreCanceled, clazz);
 
         if(!this.listeners.containsKey(clazz))
             listeners.put(clazz, new LinkedList<>());
@@ -124,11 +135,22 @@ public class DefaultEventManager implements IEventManager {
     @Override
     public Map<Handler, Exception> call(IEvent event) {
         Map<Handler, Exception> exceptions = new HashMap<>();
+
+        boolean isCancellable = ICancellable.class.isAssignableFrom(event.getClass());
+
         for(Handler handler : getHandlers(event.getClass())) {
             try {
+                if(isCancellable && ((ICancellable)event).isCanceled() && !handler.ignoreCanceled()) {
+                    continue;
+                }
+
                 handler.method().invoke(handler.instance(), event);
             } catch (Exception exception) {
                 exceptions.put(handler, exception);
+
+                if(this.stopExecutionOnException) {
+                    break;
+                }
             }
         }
         return exceptions;

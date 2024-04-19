@@ -11,4 +11,6 @@ public @interface EventHandler {
 
     Priority priority() default Priority.NORMAL;
 
+    boolean ignoreCancelled() default false;
+
 }
