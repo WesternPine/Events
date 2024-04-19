@@ -23,7 +23,7 @@ class DefaultEventManagerTest {
     private ListenerTest listenerTest;
 
     public DefaultEventManagerTest() {
-        this.eventManager = new DefaultEventManager();
+        this.eventManager = new DefaultEventManager(false);
         this.listenerTest = new ListenerTest();
     }
 
@@ -40,7 +40,7 @@ class DefaultEventManagerTest {
         List<Handler> handlers = references.stream().map(reference -> this.eventManager.registerListener(reference.instance(), reference.method())).toList();
 
         this.eventManager.unregisterListener(handlers.get(0));
-        Assertions.assertEquals(eventManager.getListeners().size(), 1);
+        Assertions.assertEquals(2, eventManager.getListeners().size());
     }
 
     @org.junit.jupiter.api.Test
@@ -57,7 +57,7 @@ class DefaultEventManagerTest {
     void getListeners() {
         List<HandlerReference> references = EventHelper.getHandlerReferences(null, listenerTest);
         references.forEach(reference -> this.eventManager.registerListener(reference.instance(), reference.method()));
-        Assertions.assertEquals(eventManager.getListeners().size(), 2);
+        Assertions.assertEquals(2, eventManager.getListeners().size());
     }
 
     @org.junit.jupiter.api.Test
