@@ -2,6 +2,10 @@
 
 Events is an event framework inspired by languages like C#. It aims to implement code cleanliness and implementation anonymity.
 
+## Download [![JitPack](https://jitpack.io/v/WesternPine/Events.svg)](https://jitpack.io/#WesternPine/Events)
+
+Currently available and supported by JitPack!
+
 ## Examples & Purpose
 
 When you need to run code from different jars or unscoped projects, things can get messy. This also:

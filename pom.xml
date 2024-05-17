@@ -28,6 +28,8 @@
         </dependency>
     </dependencies>
 
+    <packaging>jar</packaging>
+
     <build>
         <plugins>
             <plugin>
@@ -41,6 +43,8 @@
                 <version>3.1.1</version>
             </plugin>
         </plugins>
+
+        <finalName>${project.name}</finalName>
     </build>
 
 </project>
