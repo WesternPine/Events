@@ -60,7 +60,7 @@ public class DefaultEventManager implements IEventManager {
             if(!Objects.isNull(instance))
                 throw new StaticListenerRegistrationException(instance, method);
         } else {
-            if(Objects.isNull(instance) || method.getDeclaringClass() != instance.getClass())
+            if(Objects.isNull(instance) || !instance.getClass().isAssignableFrom(method.getDeclaringClass()))
                 throw new InstanceListenerRegistrationException(instance, method);
         }
 
